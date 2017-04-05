@@ -310,10 +310,11 @@ def build(H, q):
     arch = H
     solver = H["solver"]
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(solver.get('gpu', ''))
+    #os.environ['CUDA_VISIBLE_DEVICES'] = str(solver.get('gpu', ''))
 
     #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.8)
     gpu_options = tf.GPUOptions()
+    print(gpu_options)
     config = tf.ConfigProto(gpu_options=gpu_options)
 
     learning_rate = tf.placeholder(tf.float32)
@@ -387,7 +388,7 @@ def build(H, q):
 
                 merged = train_utils.add_rectangles(H, np_img, np_confidences, np_boxes,
                                                     use_stitching=True,
-                                                    rnn_len=H['rnn_len'])[0]
+                                                    rnn_len=H['rnn_len'], show_suppressed=False)[0]
 
                 num_images = 10
                 img_path = os.path.join(H['save_dir'], '%s_%s.jpg' % ((np_global_step / H['logging']['display_iter']) % num_images, pred_or_true))

@@ -41,12 +41,12 @@ def load_idl_tf(idlfile, H, jitter):
     for epoch in itertools.count():
         random.shuffle(annos)
         for anno in annos:
-            I = imread(anno.imageName)
-	    #Skip Greyscale images
-            if len(I.shape) < 3:
-                continue
-            if I.shape[2] == 4:
-                I = I[:, :, :3]
+            if H['grayscale']:
+                I = imread(anno.imageName, mode = 'RGB' if random.random() < H['grayscale_prob'] else 'L')
+                if len(orig_img.shape) < 3:
+                    orig_img = cv2.cvtColor(orig_img, cv2.COLOR_GRAY2RGB)
+            else:
+                I = imread(anno.imageName, mode = 'RGB')
             if I.shape[0] != H["image_height"] or I.shape[1] != H["image_width"]:
                 if epoch == 0:
                     anno = rescale_boxes(I.shape, anno, H["image_height"], H["image_width"])

@@ -5,7 +5,10 @@ import sys
 import argparse
 import numpy as np
 import copy
+import json
 import annolist.AnnotationLib as al
+from xml.etree import ElementTree
+from scipy.misc import imread
 
 def annotation_to_h5(H, a, cell_width, cell_height, max_len):
     region_size = H['region_size']
@@ -174,3 +177,156 @@ def annotation_jitter(I, a_in, min_box_width=20, jitter_scale_min=0.9, jitter_sc
     a.rects = new_rects
 
     return I2, a
+
+def convert_sloth(filename):
+    with open(filename) as f:
+      annos = json.load(f)
+    new_annos = [
+        {
+          "image_path" : anno["filename"],
+          "rects" : [
+            {
+              'x1' : rect["x"],
+              'x2' : rect["x"] + rect["width"],
+              'y1' : rect["y"],
+              'y2' : rect["y"] + rect["height"],
+            } for rect in anno["annotations"]
+          ]
+        } for anno in annos
+    ]
+    with open("{}/{}".format(os.path.dirname(filename), "annotations.json"), 'w') as f:
+        json.dump(new_annos, f)
+
+def convert_to_sloth(filename):
+    with open(filename) as f:
+      annos = json.load(f)
+    new_annos = [
+        {
+          "filename" : anno["image_path"],
+          "annotations" : [
+            {
+              'x' : rect["x1"],
+              'y' : rect["y1"],
+              'width' : rect["x2"] - rect["x1"],
+              'height' : rect["y2"] - rect["y1"],
+            } for rect in anno["rects"]
+          ]
+        } for anno in annos
+    ]
+    with open("{}/{}".format(os.path.dirname(filename), "annotations_sloth.json"), 'w') as f:
+        json.dump(new_annos, f)
+
+def convert_pets2009(filename, version, dirname):
+    root = ElementTree.parse(filename).getroot()
+    res = [
+        {
+            "image_path" : "{}/frame_{:04d}.jpg".format(dirname, int(frame.attrib['number'])),
+            "rects" : [
+                {
+                    'x1' : float(obj[0].attrib['xc']) - float(obj[0].attrib['w']) / 2,
+                    'x2' : float(obj[0].attrib['xc']) + float(obj[0].attrib['w']) / 2,
+                    'y1' : float(obj[0].attrib['yc']) - float(obj[0].attrib['h']) / 2,
+                    'y2' : float(obj[0].attrib['yc']) + float(obj[0].attrib['h']) / 2,
+                } for obj in frame[0].findall('object')
+            ] 
+        } for frame in root.findall('frame') 
+    ]
+    with open("data/annotation_PETS_{}.json".format(version), "w") as f:
+        json.dump(res, f)
+
+
+def convert_tud_campus(filename, dirname):
+    root = ElementTree.parse(filename).getroot()
+    res = [
+        {
+            "image_path" : "{}/DaSide0811-seq6-{:03d}.png".format(dirname, int(frame.attrib['number'])),
+            "rects" : [
+                {
+                    'x1' : float(obj[0].attrib['xc']) - float(obj[0].attrib['w']) / 2,
+                    'x2' : float(obj[0].attrib['xc']) + float(obj[0].attrib['w']) / 2,
+                    'y1' : float(obj[0].attrib['yc']) - float(obj[0].attrib['h']) / 2,
+                    'y2' : float(obj[0].attrib['yc']) + float(obj[0].attrib['h']) / 2,
+                } for obj in frame[0].findall('object')
+            ] 
+        } for frame in root.findall('frame') 
+    ]
+    with open("data/annotation_TUD_CAMPUS.json", "w") as f:
+        json.dump(res, f)
+
+
+def convert_tud_crossing(filename, dirname):
+    root = ElementTree.parse(filename).getroot()
+    res = [
+        {
+            "image_path" : "{}/DaSide0811-seq7-{:03d}.png".format(dirname, int(frame.attrib['number'])),
+            "rects" : [
+                {
+                    'x1' : float(obj[0].attrib['xc']) - float(obj[0].attrib['w']) / 2,
+                    'x2' : float(obj[0].attrib['xc']) + float(obj[0].attrib['w']) / 2,
+                    'y1' : float(obj[0].attrib['yc']) - float(obj[0].attrib['h']) / 2,
+                    'y2' : float(obj[0].attrib['yc']) + float(obj[0].attrib['h']) / 2,
+                } for obj in frame[0].findall('object')
+            ] 
+        } for frame in root.findall('frame') 
+    ]
+    with open("data/annotation_TUD_CROSSING.json", "w") as f:
+        json.dump(res, f)
+
+def convert_kitty(filename, version, dirname):
+    res = []
+    with open(filename) as f:
+        for line in f:
+            frame_nmb, r, tp, z, c, v, x1, y1, x2, y2, a, b, c, d, e, f, g = line.split()
+            frame_nmb = int(frame_nmb)
+            while frame_nmb >= len(res):
+                res.append({
+                    "image_path": "{}/{:06d}.png".format(dirname, len(res)),
+                    "rects" : []
+                })
+            if tp == "Pedestrian":
+                res[frame_nmb]["rects"].append({
+                    'x1' : float(x1),
+                    'x2' : float(x2),
+                    'y1' : float(y1),
+                    'y2' : float(y2)
+                })
+    with open("data/annotation_KITTY_{}.json".format(version), 'w') as f:
+        json.dump(res, f)
+
+def convert_pets2017(filename, version, dirname, last):
+    res = []
+    with open(filename) as f:
+        for line in f:
+            frame_nmb, pd_nmb, x1, y1, w, h, a, b, c, d = line.split(",")
+            frame_nmb = int(frame_nmb)
+            while frame_nmb > len(res):
+                res.append({
+                    "image_path": "{}/{:06d}.jpg".format(dirname, len(res) + 1),
+                    "rects" : []
+                })
+            res[frame_nmb - 1]["rects"].append({
+                'x1' : float(x1),
+                'x2' : float(x1) + float(w),
+                'y1' : float(y1),
+                'y2' : float(y1) + float(h)
+            })
+    while(last > len(res)):
+        res.append({
+            "image_path": "{}/{:06d}.jpg".format(dirname, len(res) + 1),
+            "rects" : []
+        })
+    with open("data/annotation_PETS2017_{}.json".format(version), 'w') as f:
+        json.dump(res, f)
+
+
+
+def merge_annotations(output_name, *files):
+    res = []
+    for json_anno in files:
+        with open(json_anno) as f:
+            anno = json.load(f)
+            res += anno
+    import random
+    random.shuffle(res)
+    with open(output_name, 'w') as f:
+        json.dump(res, f)
