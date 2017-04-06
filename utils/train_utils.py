@@ -43,8 +43,8 @@ def load_idl_tf(idlfile, H, jitter):
         for anno in annos:
             if H['grayscale']:
                 I = imread(anno.imageName, mode = 'RGB' if random.random() < H['grayscale_prob'] else 'L')
-                if len(orig_img.shape) < 3:
-                    orig_img = cv2.cvtColor(orig_img, cv2.COLOR_GRAY2RGB)
+                if len(I.shape) < 3:
+                    I = cv2.cvtColor(I, cv2.COLOR_GRAY2RGB)
             else:
                 I = imread(anno.imageName, mode = 'RGB')
             if I.shape[0] != H["image_height"] or I.shape[1] != H["image_width"]:
