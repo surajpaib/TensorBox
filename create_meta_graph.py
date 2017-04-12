@@ -4,6 +4,7 @@ import cv2
 import argparse
 import random
 import json
+import os
 
 def create_meta_graph(args, H):
     tf.reset_default_graph()
@@ -23,12 +24,15 @@ def create_meta_graph(args, H):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         saver.save(sess, args.output)
+        tf.train.write_graph(sess.graph.as_graph_def(), '', "{}.pb".format(args.output))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', required=True)
     parser.add_argument('--hypes', required=True)
+    parser.add_argument('--gpu', default=0)
     args = parser.parse_args()
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
     with open(args.hypes, 'r') as f:
         H = json.load(f)
     create_meta_graph(args, H)
