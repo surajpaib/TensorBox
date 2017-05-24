@@ -16,9 +16,13 @@ import random
 from time import time
 
 def get_image_dir(args):
-    weights_iteration = int(args.weights.split('-')[-1])
+    weights_iteration = int(args.weights.split('-')[-1]) if args.weights else "production"
+    results_path = "screens"
+    if not os.path.exists(results_path):
+        os.makedirs(results_path)
+    dirname = os.path.dirname(args.weights) if args.weights else "screens"
     expname = '_' + args.expname if args.expname else ''
-    image_dir = '%s/images_%s_%d%s' % (os.path.dirname(args.weights), os.path.basename(os.path.dirname(args.datadir)), weights_iteration, expname)
+    image_dir = '%s/images_%s_%s%s' % (dirname, os.path.basename(os.path.dirname(args.datadir)), weights_iteration, expname)
     return image_dir
 
 def load_frozen_graph(frozen_graph_filename):
@@ -47,17 +51,16 @@ def get_results(args, H, data_dir):
     with tf.Session(config=tf.ConfigProto(intra_op_parallelism_threads=NUM_THREADS),
             graph=graph if args.frozen_graph else None) as sess:
         sess.run(tf.global_variables_initializer())
-        if not args.frozen_graph:
-            new_saver.restore(sess, args.weights)
         if args.frozen_graph:
             x_in = graph.get_tensor_by_name('x_in:0')
             pred_boxes = graph.get_tensor_by_name('add:0')
             pred_confidences = graph.get_tensor_by_name('Reshape_2:0')
         else:
+            new_saver.restore(sess, args.weights)
             x_in = tf.get_collection('placeholders')[0]
             pred_boxes, pred_confidences = tf.get_collection('vars')
-            #freeze_graph.freeze_graph("model.pb", "", False, args.weights, "add,Reshape_2", "save/restore_all",
-            # "save/Const:0", "model_frozen.pb", False, '') 
+            #freeze_graph.freeze_graph("overfeat.pb", "", False, args.weights, "add,Reshape_2", "save/restore_all",
+             #"save/Const:0", "overfeat_frozen.pb", False, '') 
 
         pred_annolist = al.AnnoList()
         
@@ -77,12 +80,12 @@ def get_results(args, H, data_dir):
             feed = {x_in: img}
             start_time = time()
             (np_pred_boxes, np_pred_confidences) = sess.run([pred_boxes, pred_confidences], feed_dict=feed)
-            print(time() - start_time)
+            time_2 = time()
             pred_anno = al.Annotation()
             pred_anno.imageName = image_name
             new_img, rects = add_rectangles(H, [img], np_pred_confidences, np_pred_boxes,
                                             use_stitching=True, rnn_len=H['rnn_len'], min_conf=args.min_conf, tau=args.tau, show_suppressed=args.show_suppressed)
-       
+            print(time() - start_time)
             pred_anno.rects = rects
             pred_anno.imagePath = os.path.abspath(data_dir)
             pred_anno = rescale_boxes((H["image_height"], H["image_width"]), pred_anno, orig_img.shape[0], orig_img.shape[1], test=True)
@@ -96,7 +99,7 @@ def get_results(args, H, data_dir):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', required=True)
+    parser.add_argument('--weights', required=False)
     parser.add_argument('--datadir', required=True)
     parser.add_argument('--graphfile', required=True)
     parser.add_argument('--expname', default='')
@@ -109,12 +112,9 @@ if __name__ == '__main__':
     parser.add_argument('--frozen_graph', default=False, type=bool)
     args = parser.parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
-    hypes_file = '%s/hypes.json' % os.path.dirname(args.weights)
+    hypes_file = '%s/hypes.json' % os.path.dirname(args.weights) if args.weights else "hypes/lstm_resnet_rezoom.json"
     with open(hypes_file, 'r') as f:
         H = json.load(f)
     expname = '_' + args.expname  if args.expname else ''
-    pred_boxes = '%s%s.json' % (args.weights, expname)
-    true_boxes = '%s.gt_%s' % (args.weights, expname)
  
     pred_annolist = get_results(args, H, os.path.dirname(args.datadir))
-    pred_annolist.save(pred_boxes)
