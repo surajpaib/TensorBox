@@ -318,6 +318,95 @@ def convert_pets2017(filename, version, dirname, last):
     with open("data/annotation_PETS2017_{}.json".format(version), 'w') as f:
         json.dump(res, f)
 
+def convert_berkley_mat(filename, datadir
+    ):
+    from scipy.io import loadmat
+    identity_ids, photoset_ids, owner_ids, photo_ids, head_boxes, train_idx, test_idx, val_idx, leftover_idx, test_split = loadmat(filename)['data'][0][0]
+    res = {}
+    for i in range(len(head_boxes)):
+        image_name = "{}_{}".format(int(photoset_ids[i][0][0]), int(photo_ids[i][0][0]))
+        bbox = head_boxes[i]
+        if i + 1 in train_idx:
+            prefix = "train"
+        elif i + 1 in test_idx:
+            prefix = "test"
+        elif i + 1 in val_idx:
+            prefix = "val"
+        else:
+            prefix = "leftover"
+        image_path = "{}/{}.jpg".format(prefix, image_name)
+        if image_path not in res:
+            res[image_path] = []
+        rect = {
+            "x1" : float(bbox[0]),
+            "x2" : float(bbox[0] + bbox[2]),
+            "y1" : float(bbox[1]),
+            "y2" : float(bbox[1] + bbox[3]),
+        }
+        if rect not in res[image_path]:
+            res[image_path].append(rect)
+    res2 = []
+    for key, rects in res.iteritems():
+        res2.append(
+            {
+                "image_path": key,
+                "rects" : rects
+            }
+        )
+    with open("{}/annos.json".format(datadir), 'w') as f:
+        json.dump(res2, f)
+
+
+def convert_berkley(textfile, annos, datadir):
+    with open(annos) as f:
+        annos = json.load(f)
+    annos2 = {}
+    for anno in annos:
+        annos2[anno["image_path"]] = anno["rects"]
+    prefixes = ['leftover', 'train', 'val', 'test']
+    for line in open(textfile):
+        photoset_id, photo_id, xmin, ymin, width, height, dentity_id, subset_id = map(int, line.split())
+        image_path = "{}/{}_{}.jpg".format(prefixes[subset_id], photoset_id, photo_id)
+        if image_path not in annos2:
+            annos2[image_path] = []
+        rect = {
+            "x1" : float(xmin),
+            "x2" : float(xmin + width),
+            "y1" : float(ymin),
+            "y2" : float(ymin + height),
+        }
+        if rect not in annos2[image_path]:
+            annos2[image_path].append(rect)
+    res = []
+    for key, rects in annos2.iteritems():
+        res.append(
+            {
+                "image_path": "{}/{}".format(datadir, key),
+                "rects" : rects
+            }
+        )
+    with open("{}/annos2.json".format(datadir), 'w') as f:
+        json.dump(res, f)
+
+
+def convert_hollywood(phase, datadir):
+    annos = []
+    for image_id in open("{}/Splits/{}.txt".format(datadir, phase)):
+        image_id = image_id.rstrip('\n')
+        image_path = "{}/JPEGImages/{}.jpeg".format(datadir, image_id)
+        xml_path = "{}/Annotations/{}.xml".format(datadir, image_id)
+        root = ElementTree.parse(xml_path).getroot()
+        annos.append({
+            "image_path" : image_path,
+            "rects" : [{
+                    'x1' : float(obj[1][0].text),
+                    'y1' : float(obj[1][1].text),
+                    'x2' : float(obj[1][2].text),
+                    'y2' : float(obj[1][3].text)
+                } for obj in root.findall('object') if obj.find("bndbox")] 
+        })
+    with open("{}/{}.json".format(datadir, phase), 'w') as f:
+        json.dump(annos, f)
 
 
 def merge_annotations(output_name, *files):

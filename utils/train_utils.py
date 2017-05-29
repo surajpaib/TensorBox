@@ -49,34 +49,37 @@ def load_idl_tf(idlfile, H, jitter):
     for epoch in itertools.count():
         random.shuffle(annos)
         for anno in annos:
-            if H['grayscale']:
-                I = imread(anno.imageName, mode = 'RGB' if random.random() < H['grayscale_prob'] else 'L')
-                if len(I.shape) < 3:
-                    I = cv2.cvtColor(I, cv2.COLOR_GRAY2RGB)
-            else:
-                I = imread(anno.imageName, mode = 'RGB')
-            if I.shape[0] != H["image_height"] or I.shape[1] != H["image_width"]:
-                if epoch == 0:
-                    anno = rescale_boxes(I.shape, anno, H["image_height"], H["image_width"])
-                I = imresize(I, (H["image_height"], H["image_width"]), interp='cubic')
-            if jitter:
-                jitter_scale_min=0.9
-                jitter_scale_max=1.1
-                jitter_offset=16
-                I, anno = annotation_jitter(I,
-                                            anno, target_width=H["image_width"],
-                                            target_height=H["image_height"],
-                                            jitter_scale_min=jitter_scale_min,
-                                            jitter_scale_max=jitter_scale_max,
-                                            jitter_offset=jitter_offset)
+            try:
+                if H['grayscale']:
+                    I = imread(anno.imageName, mode = 'RGB' if random.random() < H['grayscale_prob'] else 'L')
+                    if len(I.shape) < 3:
+                        I = cv2.cvtColor(I, cv2.COLOR_GRAY2RGB)
+                else:
+                    I = imread(anno.imageName, mode = 'RGB')
+                if I.shape[0] != H["image_height"] or I.shape[1] != H["image_width"]:
+                    if epoch == 0:
+                        anno = rescale_boxes(I.shape, anno, H["image_height"], H["image_width"])
+                    I = imresize(I, (H["image_height"], H["image_width"]), interp='cubic')
+                if jitter:
+                    jitter_scale_min=0.9
+                    jitter_scale_max=1.1
+                    jitter_offset=16
+                    I, anno = annotation_jitter(I,
+                                                anno, target_width=H["image_width"],
+                                                target_height=H["image_height"],
+                                                jitter_scale_min=jitter_scale_min,
+                                                jitter_scale_max=jitter_scale_max,
+                                                jitter_offset=jitter_offset)
 
-            boxes, flags = annotation_to_h5(H,
-                                            anno,
-                                            H["grid_width"],
-                                            H["grid_height"],
-                                            H["rnn_len"])
+                boxes, flags = annotation_to_h5(H,
+                                                anno,
+                                                H["grid_width"],
+                                                H["grid_height"],
+                                                H["rnn_len"])
 
-            yield {"image": I, "boxes": boxes, "flags": flags}
+                yield {"image": I, "boxes": boxes, "flags": flags}
+            except:
+                pass
 
 def make_sparse(n, d):
     v = np.zeros((d,), dtype=np.float32)
