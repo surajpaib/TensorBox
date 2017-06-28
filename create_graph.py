@@ -1,9 +1,7 @@
 import tensorflow as tf
 from tensorflow.python.tools.freeze_graph import freeze_graph
 from train import build_forward
-import cv2
 import argparse
-import random
 import json
 import os
 
