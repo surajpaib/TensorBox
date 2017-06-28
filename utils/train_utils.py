@@ -153,7 +153,9 @@ def add_rectangles(H, orig_image, confidences, boxes, use_stitching=False, rnn_l
                     (rect.cx-int(rect.width/2), rect.cy-int(rect.height/2)),
                     (rect.cx+int(rect.width/2), rect.cy+int(rect.height/2)),
                     color,
-                    2)
+                    1)
+
+    cv2.putText(image,str(len(filter(lambda rect:rect.confidence > min_conf, acc_rects))), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2)
 
     rects = []
     for rect in acc_rects:
