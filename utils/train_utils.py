@@ -79,7 +79,7 @@ def load_idl_tf(idlfile, H, jitter):
 
                 yield {"image": I, "boxes": boxes, "flags": flags}
             except:
-                pass
+                print("The file is not exist {}".format(anno.imageName))
 
 def make_sparse(n, d):
     v = np.zeros((d,), dtype=np.float32)
