@@ -2,12 +2,14 @@
 
 <img src="https://travis-ci.org/TensorBox/TensorBox.svg?branch=master"></img>
 
-TensorBox is a simple framework for training neural networks to detect objects in images. 
+TensorBox is a project for training neural networks to detect objects in images. 
 Training requires a json file (e.g. [here](http://russellsstewart.com/s/tensorbox/test_boxes.json))
 containing a list of images and the bounding boxes in each image.
 The basic model implements the simple and robust GoogLeNet-OverFeat algorithm with attention.
 
-## OverFeat Installation & Training
+## Training
+
+### OverFeat Installation & Training 
 First, [install TensorFlow from source or pip](https://www.tensorflow.org/versions/r0.11/get_started/os_setup.html#pip-installation) (NB: source installs currently break threading on 0.11)
     
     $ git clone http://github.com/russell91/tensorbox
@@ -17,7 +19,15 @@ First, [install TensorFlow from source or pip](https://www.tensorflow.org/versio
     $ python train.py --hypes hypes/overfeat_rezoom.json --gpu 0 --logdir output
     $ #see evaluation instructions below
 
-Note that running on your own dataset should only require modifying the `hypes/overfeat_rezoom.json` file. 
+Note that running on your own dataset should only require modifying the `hypes/overfeat_rezoom.json` file.
+ 
+### Training on your own data
+TensorBox supports several data formats for bounding boxes description (idl, json, ...). The easiest way to fid your 
+dataset is making a json-file description. It could be made using `make_json.py` script or you can convert other 
+annotation description into json. The file formats are described [here](utils/annolist/readme.md).
+
+At the moment, TensorBox supports only one input image size 640x480. It means that any data you provide (images 
+and boxes) would be resized to the 640x480.
 
 ## Evaluation
 
