@@ -43,6 +43,8 @@ def load_frozen_graph(frozen_graph_filename):
 
 def get_results(args, H, data_dir):
     tf.reset_default_graph()
+    H["grid_width"] = H["image_width"] / H["region_size"]
+    H["grid_height"] = H["image_height"] / H["region_size"]
     if args.frozen_graph:
         graph = load_frozen_graph(args.graphfile)
     else:
@@ -112,7 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('--frozen_graph', default=False, type=bool)
     args = parser.parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
-    hypes_file = '%s/hypes.json' % os.path.dirname(args.weights) if args.weights else "hypes/lstm_resnet_rezoom.json"
+    hypes_file = '%s/hypes.json' % os.path.dirname(args.weights) if args.weights else "hypes/lstm_rezoom.json"
     with open(hypes_file, 'r') as f:
         H = json.load(f)
     expname = '_' + args.expname  if args.expname else ''

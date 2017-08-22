@@ -422,6 +422,9 @@ def train(H, test_images):
     with open(H['save_dir'] + '/hypes.json', 'w') as f:
         json.dump(H, f, indent=4)
 
+    H["grid_width"] = H["image_width"] / H["region_size"]
+    H["grid_height"] = H["image_height"] / H["region_size"]
+
     x_in = tf.placeholder(tf.float32)
     confs_in = tf.placeholder(tf.float32)
     boxes_in = tf.placeholder(tf.float32)
