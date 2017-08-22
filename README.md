@@ -18,20 +18,13 @@ First, [install TensorFlow from source or pip](https://www.tensorflow.org/versio
     $ #see evaluation instructions below
 
 Note that running on your own dataset should only require modifying the `hypes/overfeat_rezoom.json` file.
- 
+
 ### Training on your own data
-TensorBox supports several data formats for bounding boxes description (idl, json, ...). The easiest way to fid your 
-dataset is making a json-file description. It could be made using `make_json.py` script or you can convert other 
-annotation description into json. The file formats are described [here](utils/annolist/readme.md).
-
-At the moment, TensorBox supports only one input image size 640x480. It means that any data you provide (images 
-and boxes) would be resized to the 640x480.
-
-## Training on your own data
 
 TensorBox supports several data formats for bounding boxes description (idl, json, ...). The easiest way to fid your dataset is making a json-file description. It could be made using `make_json.py` script or you can convert other annotation description into json. The file formats are described [here](https://github.com/Russell91/TensorBox/blob/master/utils/annolist/readme.md).
 
 Now you are able to change input size of image in hypes files. Make sure that it is multiple 32.
+Also a couple of experimental and not working models has been added recently.
 
 ## ReInspect Installation & Training        
 
