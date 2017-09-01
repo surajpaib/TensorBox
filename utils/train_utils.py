@@ -50,11 +50,13 @@ def load_idl_tf(idlfile, H, jitter):
         random.shuffle(annos)
         for anno in annos:
             try:
-                if H['grayscale']:
+                if 'grayscale' in H and 'grayscale_prob' in H:
                     I = imread(anno.imageName, mode = 'RGB' if random.random() < H['grayscale_prob'] else 'L')
                     if len(I.shape) < 3:
                         I = cv2.cvtColor(I, cv2.COLOR_GRAY2RGB)
                 else:
+                    if len(I.shape) < 3:
+                        continue
                     I = imread(anno.imageName, mode = 'RGB')
                 if I.shape[0] != H["image_height"] or I.shape[1] != H["image_width"]:
                     if epoch == 0:
@@ -78,8 +80,8 @@ def load_idl_tf(idlfile, H, jitter):
                                                 H["rnn_len"])
 
                 yield {"image": I, "boxes": boxes, "flags": flags}
-            except:
-                print("The file is not exist {}".format(anno.imageName))
+            except Exception as exc:
+                print(exc)
 
 def make_sparse(n, d):
     v = np.zeros((d,), dtype=np.float32)
@@ -159,13 +161,14 @@ def add_rectangles(H, orig_image, confidences, boxes, use_stitching=False, rnn_l
 
     rects = []
     for rect in acc_rects:
-        r = al.AnnoRect()
-        r.x1 = rect.cx - rect.width/2.
-        r.x2 = rect.cx + rect.width/2.
-        r.y1 = rect.cy - rect.height/2.
-        r.y2 = rect.cy + rect.height/2.
-        r.score = rect.true_confidence
-        rects.append(r)
+        if rect.confidence > min_conf:
+            r = al.AnnoRect()
+            r.x1 = rect.cx - rect.width/2.
+            r.x2 = rect.cx + rect.width/2.
+            r.y1 = rect.cy - rect.height/2.
+            r.y2 = rect.cy + rect.height/2.
+            r.score = rect.confidence
+            rects.append(r)
 
     return image, rects
 
