@@ -87,7 +87,9 @@ def main():
 
     pred_annolist, true_annolist = get_results(args, H)
     pred_annolist.save(pred_boxes)
+    print(pred_boxes)
     true_annolist.save(true_boxes)
+    print(true_boxes)
 
     try:
         rpc_cmd = './utils/annolist/doRPC.py --minOverlap %f %s %s' % (args.iou_threshold, true_boxes, pred_boxes)

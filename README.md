@@ -63,6 +63,11 @@ you will need to change paths as appropriate:
     $ ssh myserver -N -L localhost:8080:localhost:8080 # set up an ssh tunnel to your server (skip if running locally)
     $ # open firefox and visit localhost:8080 to view images
 
+## Running on your images (possibly in Production)
+
+    $ python run.py --weights output/overfeat_rezoom_2017_01_17_15.20/save.ckpt-130000 --image <path-to-your-image> --output_dir <directory where you want the results>
+    $ # Weigths file references the location of your save.ckpt.. file
+
 ## Finetuning
 
 If you get some decent results and want to improve your performance, there are many things you can try.
